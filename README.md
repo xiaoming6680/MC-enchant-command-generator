@@ -2,6 +2,8 @@
 
 一个用于生成 Minecraft Java 1.21.11 新版物品组件格式 `/give` 指令的静态网页工具。
 
+网页入口：https://xiaoming6680.github.io/MC-enchant-command-generator/
+
 ## 功能
 
 - 选择目标玩家：支持 `@a`、`@p`、`@r`、`@s`，也可以输入自定义玩家名。
