@@ -4,6 +4,9 @@
 
 网页入口：https://xiaoming6680.github.io/MC-enchant-command-generator/
 
+<img width="2549" height="1242" alt="image" src="https://github.com/user-attachments/assets/c2995162-9d49-4bda-ad63-85947303247d" />
+
+
 ## 功能
 
 - 选择目标玩家：支持 `@a`、`@p`、`@r`、`@s`，也可以输入自定义玩家名。
