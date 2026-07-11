@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MC 1.21.11 附魔武器指令生成器</title>
+  <title>MC附魔指令生成器</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,113 +15,58 @@
         <span class="brand-block brand-block-obsidian"></span>
       </div>
       <div class="brand-copy">
-        <p class="eyebrow">Minecraft Java 1.21.11</p>
-        <h1>附魔武器指令生成器</h1>
-        <p class="subtitle">生成新版物品组件格式的 /give 指令</p>
+        <p class="eyebrow">Minecraft Java Edition</p>
+        <h1>附魔指令生成器</h1>
+        <p class="subtitle">为不同 Java 版本生成对应格式的 /give 附魔物品指令</p>
       </div>
     </header>
 
     <div class="workspace">
       <div class="editor-column">
-        <section class="panel">
+        <section class="panel settings-panel">
           <div class="panel-header">
             <div>
-              <p class="section-label">目标</p>
-              <h2>接收玩家</h2>
+              <p class="section-label">设置</p>
+              <h2>指令与目标</h2>
             </div>
           </div>
 
-          <div class="field-grid two-columns">
+          <div class="field-grid settings-grid">
             <label class="field">
-              <span>选择目标</span>
-              <select id="targetSelect">
-                <option value="@a" selected>@a</option>
-                <option value="@p">@p</option>
-                <option value="@r">@r</option>
-                <option value="@s">@s</option>
+              <span>选择 Minecraft Java 版本</span>
+              <select id="versionSelect">
+                <option value="componentShort" selected>Java 1.21.5+</option>
+                <option value="componentLevels">Java 1.20.5 - 1.21.4</option>
+                <option value="nbtString">Java 1.13 - 1.20.4</option>
+                <option value="nbtNumeric">Java 1.8 - 1.12.2</option>
               </select>
             </label>
-
             <label class="field">
-              <span>自定义玩家名</span>
-              <input id="customTargetInput" type="text" placeholder="例如 Steve">
+              <span>目标玩家</span>
+              <div id="targetCombobox" class="combobox"></div>
             </label>
+
+            <p id="versionDescription" class="field-help">新版物品组件简化格式</p>
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel item-panel">
           <div class="panel-header">
             <div>
               <p class="section-label">物品</p>
               <h2>武器或工具</h2>
             </div>
+            <a class="button secondary lookup-button" href="https://mcid.lingningyu.cn/" target="_blank" rel="noopener noreferrer">查询物品 ID</a>
           </div>
 
-          <div class="field-grid two-columns">
-            <label class="field">
-              <span>常用物品</span>
-              <select id="itemSelect">
-                <optgroup label="剑">
-                  <option value="wooden_sword">木剑</option>
-                  <option value="stone_sword">石剑</option>
-                  <option value="iron_sword">铁剑</option>
-                  <option value="golden_sword">金剑</option>
-                  <option value="diamond_sword" selected>钻石剑</option>
-                  <option value="netherite_sword">下界合金剑</option>
-                </optgroup>
-                <optgroup label="斧">
-                  <option value="wooden_axe">木斧</option>
-                  <option value="stone_axe">石斧</option>
-                  <option value="iron_axe">铁斧</option>
-                  <option value="golden_axe">金斧</option>
-                  <option value="diamond_axe">钻石斧</option>
-                  <option value="netherite_axe">下界合金斧</option>
-                </optgroup>
-                <optgroup label="镐">
-                  <option value="wooden_pickaxe">木镐</option>
-                  <option value="stone_pickaxe">石镐</option>
-                  <option value="iron_pickaxe">铁镐</option>
-                  <option value="golden_pickaxe">金镐</option>
-                  <option value="diamond_pickaxe">钻石镐</option>
-                  <option value="netherite_pickaxe">下界合金镐</option>
-                </optgroup>
-                <optgroup label="铲">
-                  <option value="wooden_shovel">木铲</option>
-                  <option value="stone_shovel">石铲</option>
-                  <option value="iron_shovel">铁铲</option>
-                  <option value="golden_shovel">金铲</option>
-                  <option value="diamond_shovel">钻石铲</option>
-                  <option value="netherite_shovel">下界合金铲</option>
-                </optgroup>
-                <optgroup label="锄">
-                  <option value="wooden_hoe">木锄</option>
-                  <option value="stone_hoe">石锄</option>
-                  <option value="iron_hoe">铁锄</option>
-                  <option value="golden_hoe">金锄</option>
-                  <option value="diamond_hoe">钻石锄</option>
-                  <option value="netherite_hoe">下界合金锄</option>
-                </optgroup>
-                <optgroup label="远程与特殊武器">
-                  <option value="bow">弓</option>
-                  <option value="crossbow">弩</option>
-                  <option value="trident">三叉戟</option>
-                  <option value="mace">重锤</option>
-                </optgroup>
-                <optgroup label="实用工具">
-                  <option value="fishing_rod">钓鱼竿</option>
-                  <option value="shears">剪刀</option>
-                  <option value="flint_and_steel">打火石</option>
-                  <option value="shield">盾牌</option>
-                  <option value="brush">刷子</option>
-                  <option value="carrot_on_a_stick">胡萝卜钓竿</option>
-                  <option value="warped_fungus_on_a_stick">诡异菌钓竿</option>
-                </optgroup>
-              </select>
+          <div class="field-grid item-fields">
+            <label class="field item-id-field">
+              <span>物品 ID</span>
+              <div id="itemCombobox" class="combobox"></div>
             </label>
-
-            <label class="field">
-              <span>自定义物品 ID</span>
-              <input id="customItemInput" type="text" placeholder="例如 minecraft:diamond_sword">
+            <label class="field quantity-field">
+              <span>数量</span>
+              <input id="itemCountInput" type="text" inputmode="numeric" min="1" value="1" placeholder="1">
             </label>
           </div>
         </section>
@@ -143,7 +88,6 @@
 
           <div class="enchant-table-header" aria-hidden="true">
             <span>附魔属性</span>
-            <span>自定义附魔 ID</span>
             <span>等级</span>
             <span>操作</span>
           </div>
@@ -163,12 +107,16 @@
 
           <div class="command-meta" aria-label="当前指令概要">
             <div class="meta-pill">
+              <span>版本</span>
+              <strong id="versionMeta">Java 1.21.5+</strong>
+            </div>
+            <div class="meta-pill">
               <span>目标</span>
-              <strong id="targetMeta">@a</strong>
+              <strong id="targetMeta">未填写</strong>
             </div>
             <div class="meta-pill">
               <span>物品</span>
-              <strong id="itemMeta">diamond_sword</strong>
+              <strong id="itemMeta">未填写</strong>
             </div>
             <div class="meta-pill">
               <span>附魔</span>
