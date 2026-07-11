@@ -4,9 +4,14 @@
 
 网页入口：https://xiaoming6680.github.io/MC-enchant-command-generator/
 
+<img width="2549" height="1403" alt="image" src="https://github.com/user-attachments/assets/c8fdfce9-3dd1-4763-8f77-8bbca584e720" />
+
+
 ## 功能
 
 - 支持 Java 1.21.5+、Java 1.20.5 - 1.21.4、Java 1.13 - 1.20.4 和 Java 1.8 - 1.12.2 四种指令格式。
+<img width="2549" height="1403" alt="image" src="https://github.com/user-attachments/assets/85bb83e6-a007-456a-b232-a9d13862c978" />
+
 - 支持选择或输入目标玩家、物品 ID，以及搜索内置选项。
 - 提供物品 ID 查询入口：https://mcid.lingningyu.cn/
 - 支持设置物品数量，必须是大于等于 `1` 的正整数。
@@ -15,6 +20,8 @@
 - 根据所选 Java 版本筛选可用物品和附魔。
 - Java 1.8 - 1.12.2 模式会将可识别的内置附魔转换为数字附魔 ID。
 - 实时预览指令，并支持一键复制。
+<img width="2549" height="1403" alt="image" src="https://github.com/user-attachments/assets/4be6bd00-9aa0-42c5-8188-9d06c6277669" />
+
 - 初始化和重置时目标、物品均为空，默认不添加附魔。
 - 初始化时显示填写提示；用户操作后分别校验目标和物品，不会因为修改一个字段而同时提示另一个未操作字段的错误。
 
@@ -30,7 +37,9 @@
 
 ## 使用方法
 
-直接用浏览器打开 `index.html` 即可使用，不需要安装依赖或启动服务器。
+直接用浏览器打开 `index.html` 
+或者访问链接 https://xiaoming6680.github.io/MC-enchant-command-generator/
+即可使用，不需要安装依赖或启动服务器。
 
 1. 选择 Minecraft Java 版本格式。
 2. 选择或输入目标玩家。
@@ -41,6 +50,8 @@
 7. 点击“复制指令”，将命令粘贴到 Minecraft 聊天框或命令方块中使用。
 
 目标玩家和物品是生成命令的必填项。点击“重置”后会恢复为空目标、空物品、数量 `1` 且无附魔的初始状态。
+<img width="2549" height="1403" alt="image" src="https://github.com/user-attachments/assets/7598f666-cb45-49e5-89d4-032fe867f8ae" />
+
 
 ## 指令格式示例
 
