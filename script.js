@@ -258,6 +258,11 @@ const versionMeta = document.getElementById("versionMeta");
 const targetMeta = document.getElementById("targetMeta");
 const itemMeta = document.getElementById("itemMeta");
 const enchantMeta = document.getElementById("enchantMeta");
+const targetErrorMessage = document.getElementById("targetError");
+const itemErrorMessage = document.getElementById("itemError");
+const quantityErrorMessage = document.getElementById("quantityError");
+const resultColumn = document.getElementById("resultColumn");
+const mobileResultToggle = document.getElementById("mobileResultToggle");
 
 let generatedCommand = "";
 let copyStatusTimer = 0;
@@ -378,12 +383,58 @@ function createSearchableCombobox(
   const input = container.querySelector(".combobox-input");
   const menu = container.querySelector(".combobox-menu");
   const toggle = container.querySelector(".combobox-toggle");
+  const control = container.querySelector(".combobox-control");
+  const ownerPanel = container.closest(".panel");
+
+  const positionMenu = () => {
+    if (menu.hidden) return;
+
+    const viewportPadding = 12;
+    const menuGap = 6;
+    const controlRect = control.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+    const menuWidth = Math.min(controlRect.width, viewportWidth - viewportPadding * 2);
+    const left = Math.min(
+      Math.max(controlRect.left, viewportPadding),
+      viewportWidth - menuWidth - viewportPadding
+    );
+    const spaceBelow = viewportHeight - controlRect.bottom - menuGap - viewportPadding;
+    const spaceAbove = controlRect.top - menuGap - viewportPadding;
+    const opensDown = spaceBelow >= Math.min(220, spaceAbove) || spaceBelow >= spaceAbove;
+    const availableSpace = opensDown ? spaceBelow : spaceAbove;
+    const menuHeight = Math.min(330, Math.max(96, availableSpace));
+    const top = opensDown
+      ? controlRect.bottom + menuGap
+      : controlRect.top - menuGap - menuHeight;
+
+    menu.style.width = `${menuWidth}px`;
+    menu.style.left = `${left}px`;
+    menu.style.right = "auto";
+    menu.style.top = `${Math.max(viewportPadding, top)}px`;
+    menu.style.bottom = "auto";
+    menu.style.maxHeight = `${menuHeight}px`;
+    container.classList.toggle("opens-up", !opensDown);
+    container.classList.toggle("opens-down", opensDown);
+  };
+
+  container.positionMenu = positionMenu;
 
   const setOpen = (isOpen) => {
     menu.hidden = !isOpen;
     input.setAttribute("aria-expanded", String(isOpen));
     container.classList.toggle("is-open", isOpen);
     container.closest(".enchantment-row")?.classList.toggle("combobox-row-open", isOpen);
+    ownerPanel?.classList.toggle(
+      "has-open-menu",
+      Boolean(ownerPanel.querySelector(".combobox.is-open"))
+    );
+    if (isOpen) {
+      window.requestAnimationFrame(positionMenu);
+    } else {
+      container.classList.remove("opens-up", "opens-down");
+      menu.removeAttribute("style");
+    }
   };
 
   const selectOption = (option) => {
@@ -516,7 +567,7 @@ function renderItemOptions(preferredValue = itemCombobox.dataset.value) {
 
 function createEnchantmentRow(enchantment = defaultState.enchantment, level = defaultState.level) {
   const row = document.createElement("div");
-  row.className = "enchantment-row";
+  row.className = "enchantment-row is-entering";
   row.dataset.enchantRow = "true";
 
   row.innerHTML = `
@@ -527,12 +578,13 @@ function createEnchantmentRow(enchantment = defaultState.enchantment, level = de
 
     <label class="field">
       <span class="mobile-label">等级</span>
-      <input class="level-input" type="text" inputmode="numeric" min="1" value="${level}" placeholder="1">
+      <input class="level-input" type="text" inputmode="numeric" min="1" value="${level}" placeholder="1" aria-label="附魔等级">
+      <small class="field-error row-level-error" aria-live="polite"></small>
     </label>
 
     <div>
       <span class="mobile-label">操作</span>
-      <button class="button danger delete-button" type="button">删除</button>
+      <button class="button delete-button" type="button" aria-label="删除这条附魔">删除</button>
     </div>
   `;
 
@@ -546,18 +598,65 @@ function createEnchantmentRow(enchantment = defaultState.enchantment, level = de
     true
   );
   row.querySelector(".level-input").addEventListener("input", interactAndUpdate);
-  row.querySelector(".delete-button").addEventListener("click", () => {
-    row.remove();
-    updateEmptyMessage();
+  row.querySelector(".delete-button").addEventListener("click", async () => {
+    await animateEnchantmentRowRemoval(row);
+    updateEmptyMessage(true);
     interactAndUpdate();
   });
+  const finishRowEntrance = (event) => {
+    if (event.animationName === "enchantment-row-enter") {
+      row.classList.remove("is-entering");
+      row.removeEventListener("animationend", finishRowEntrance);
+    }
+  };
+  row.addEventListener("animationend", finishRowEntrance);
 
   return row;
+}
+
+function animateEnchantmentRowRemoval(row, delay = 0) {
+  if (row.classList.contains("is-removing")) {
+    return Promise.resolve();
+  }
+
+  const remainingRows = getEnchantmentRows().filter((item) => !item.classList.contains("is-removing"));
+  const isFinalRemoval = remainingRows.length === 1;
+
+  row.classList.remove("is-entering");
+  row.classList.toggle("is-final-removal", isFinalRemoval);
+  row.style.setProperty("--row-height", `${row.offsetHeight}px`);
+  row.style.setProperty("--remove-delay", `${delay}ms`);
+  row.style.setProperty("--remove-gap-offset", isFinalRemoval ? "0px" : "-12px");
+  row.querySelectorAll("button,input").forEach((control) => {
+    control.disabled = true;
+  });
+  void row.offsetHeight;
+  row.classList.add("is-removing");
+
+  return new Promise((resolve) => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      row.removeEventListener("animationend", handleAnimationEnd);
+      row.remove();
+      resolve();
+    };
+    const handleAnimationEnd = (event) => {
+      if (event.target === row && event.animationName === "enchantment-row-remove") {
+        finish();
+      }
+    };
+
+    row.addEventListener("animationend", handleAnimationEnd);
+    window.setTimeout(finish, 380 + delay);
+  });
 }
 
 function addEnchantmentRow(enchantment = defaultState.enchantment, level = defaultState.level) {
   removeEmptyMessage();
   enchantmentList.appendChild(createEnchantmentRow(enchantment, level));
+  updateEmptyMessage();
   updateCommand();
 }
 
@@ -568,20 +667,32 @@ function removeEmptyMessage() {
   }
 }
 
-function updateEmptyMessage() {
+function updateEmptyMessage(animate = false) {
   const rows = getEnchantmentRows();
   const emptyMessage = enchantmentList.querySelector(".empty-message");
 
   if (rows.length === 0 && !emptyMessage) {
     const message = document.createElement("div");
     message.className = "empty-message";
-    message.textContent = "当前没有附魔，生成的指令只会给予未附魔物品。";
+    message.innerHTML = "<strong>附魔槽还是空的</strong>可直接生成普通物品，或点击“新增附魔”开始配置。";
     enchantmentList.appendChild(message);
+    if (animate) {
+      message.style.setProperty("--empty-height", `${message.scrollHeight}px`);
+      message.classList.add("is-entering");
+      message.addEventListener("animationend", () => {
+        message.classList.remove("is-entering");
+        message.style.removeProperty("--empty-height");
+      }, { once: true });
+    }
   }
 
   if (rows.length > 0 && emptyMessage) {
     emptyMessage.remove();
   }
+
+  rows.forEach((row, index) => {
+    row.dataset.slot = `SLOT ${String(index + 1).padStart(2, "0")}`;
+  });
 }
 
 function getEnchantmentRows() {
@@ -691,10 +802,28 @@ function readEnchantments(errors) {
     const levelValid = isPositiveInteger(levelValue);
     const legacyIdValid = !usesNumericNbt || legacyEnchantmentIds[enchantmentId] !== undefined;
     const rowHasError = !enchantmentValueValid || !levelValid || !legacyIdValid;
+    const rowLevelError = row.querySelector(".row-level-error");
 
     setInvalid(enchantmentInput, !enchantmentValueValid || !legacyIdValid);
     setInvalid(levelInput, !levelValid);
     row.classList.toggle("has-error", rowHasError);
+    rowLevelError.textContent = levelValid ? "" : "请输入大于或等于 1 的整数。";
+    if (!enchantmentValueValid || !legacyIdValid) {
+      enchantmentInput.setAttribute("aria-describedby", `enchantment-error-${index}`);
+      let message = row.querySelector(".row-enchantment-error");
+      if (!message) {
+        message = document.createElement("small");
+        message.className = "field-error row-enchantment-error";
+        message.id = `enchantment-error-${index}`;
+        row.querySelector(".enchantment-combobox").after(message);
+      }
+      message.textContent = !enchantmentValueValid
+        ? "请输入不含空格的附魔 ID。"
+        : "此附魔没有可用的旧版数字 ID。";
+    } else {
+      row.querySelector(".row-enchantment-error")?.remove();
+      enchantmentInput.removeAttribute("aria-describedby");
+    }
 
     if (!enchantmentValueValid) {
       errors.push(`第 ${rowNumber} 条附魔 ID 不能为空，且不能包含空格。`);
@@ -736,6 +865,9 @@ function buildCommand() {
   setInvalid(targetCombobox.querySelector(".combobox-input"), targetInteracted && !targetValid);
   setInvalid(itemCombobox.querySelector(".combobox-input"), itemInteracted && !itemValid);
   setInvalid(itemCountInput, !quantityValid);
+  targetErrorMessage.textContent = targetInteracted && !targetValid ? "请输入玩家名，或选择一个目标。" : "";
+  itemErrorMessage.textContent = itemInteracted && !itemValid ? "请选择物品，或输入不含空格的物品 ID。" : "";
+  quantityErrorMessage.textContent = !quantityValid ? "请输入大于或等于 1 的整数。" : "";
 
   if (!targetValid) {
     validationErrors.push(targetError);
@@ -810,12 +942,25 @@ function updateCommand() {
 
 function clearCopyStatus() {
   window.clearTimeout(copyStatusTimer);
+  copyStatus.classList.remove("is-visible");
   copyStatus.textContent = "";
+}
+
+function showCopyStatus(message) {
+  window.clearTimeout(copyStatusTimer);
+  copyStatus.classList.remove("is-visible");
+  copyStatus.textContent = message;
+  void copyStatus.offsetWidth;
+  copyStatus.classList.add("is-visible");
+  copyStatusTimer = window.setTimeout(() => {
+    copyStatus.classList.remove("is-visible");
+    copyStatus.textContent = "";
+  }, 2000);
 }
 
 async function copyCommand() {
   if (!generatedCommand) {
-    copyStatus.textContent = "无法复制";
+    showCopyStatus("无法复制");
     return;
   }
 
@@ -826,12 +971,9 @@ async function copyCommand() {
       fallbackCopy(generatedCommand);
     }
 
-    copyStatus.textContent = "已复制";
-    copyStatusTimer = window.setTimeout(() => {
-      copyStatus.textContent = "";
-    }, 1600);
+    showCopyStatus("已复制");
   } catch (error) {
-    copyStatus.textContent = "复制失败";
+    showCopyStatus("复制失败");
   }
 }
 
@@ -847,30 +989,109 @@ function fallbackCopy(text) {
   textarea.remove();
 }
 
-function clearEnchantments() {
-  getEnchantmentRows().forEach((row) => row.remove());
-  updateEmptyMessage();
+async function clearEnchantments() {
+  const rows = getEnchantmentRows();
+  if (rows.length === 0 || clearEnchantmentsButton.disabled) return;
+
+  clearEnchantmentsButton.disabled = true;
+  await Promise.all(rows.map((row, index) => animateEnchantmentRowRemoval(row, index * 45)));
+  clearEnchantmentsButton.disabled = false;
+  updateEmptyMessage(true);
   interactAndUpdate();
 }
 
-function resetDefault() {
-  hasInteracted = false;
+function resetSettingsSection() {
   targetInteracted = false;
-  itemInteracted = false;
   versionSelect.value = defaultState.version;
   createSearchableCombobox(
     targetCombobox,
     targetGroups,
     defaultState.target,
     interactWithTargetAndUpdate,
-    "选择目标/输入玩家名称",
+    "可输入自定义名称",
     true
   );
+  targetErrorMessage.textContent = "";
+}
+
+function resetItemSection() {
+  itemInteracted = false;
   renderItemOptions(defaultState.item);
   itemCountInput.value = defaultState.quantity;
+  itemErrorMessage.textContent = "";
+  quantityErrorMessage.textContent = "";
+}
+
+function resetEnchantmentSection() {
   enchantmentList.innerHTML = "";
   updateEmptyMessage();
+}
+
+function resetDefault() {
+  hasInteracted = false;
+  resetSettingsSection();
+  resetItemSection();
+  resetEnchantmentSection();
   updateCommand();
+}
+
+function playResetAnimation() {
+  if (resetButton.disabled) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finishReset = () => {
+    hasInteracted = false;
+    updateCommand();
+    resetButton.classList.add("reset-complete");
+    window.setTimeout(() => resetButton.classList.remove("reset-complete"), 320);
+  };
+
+  resetButton.disabled = true;
+  resetButton.setAttribute("aria-busy", "true");
+
+  if (reduceMotion) {
+    resetDefault();
+    resetButton.classList.add("reset-complete");
+    window.setTimeout(() => {
+      resetButton.classList.remove("reset-complete");
+      resetButton.disabled = false;
+      resetButton.removeAttribute("aria-busy");
+    }, 340);
+    return;
+  }
+
+  const panels = [
+    { element: document.querySelector(".settings-panel"), reset: resetSettingsSection },
+    { element: document.querySelector(".item-panel"), reset: resetItemSection },
+    { element: document.querySelector(".enchant-panel"), reset: resetEnchantmentSection }
+  ];
+  const runeText = ["ᒷリᓵ⍑ᔑリℸ", "ꖎ╎ʖ∷ᔑ∷||", "ᒲᔑ⊣╎ᓵᔑꖎ"];
+
+  resetButton.classList.add("is-resetting");
+  panels.forEach(({ element, reset }, index) => {
+    const delay = index * 140;
+    const runeLayer = document.createElement("div");
+    runeLayer.className = "reset-rune-layer";
+    runeLayer.setAttribute("aria-hidden", "true");
+    runeLayer.style.setProperty("--reset-delay", `${delay}ms`);
+    runeLayer.innerHTML = `<span>${runeText[index]}</span><span>${runeText[(index + 1) % runeText.length]}</span>`;
+    element.style.setProperty("--reset-delay", `${delay}ms`);
+    element.classList.add("is-rewinding");
+    element.appendChild(runeLayer);
+    window.setTimeout(reset, delay + 230);
+  });
+
+  window.setTimeout(finishReset, 560);
+  window.setTimeout(() => {
+    panels.forEach(({ element }) => {
+      element.classList.remove("is-rewinding");
+      element.style.removeProperty("--reset-delay");
+      element.querySelector(".reset-rune-layer")?.remove();
+    });
+    resetButton.classList.remove("is-resetting");
+    resetButton.disabled = false;
+    resetButton.removeAttribute("aria-busy");
+  }, 720);
 }
 
 function bindGlobalEvents() {
@@ -885,9 +1106,16 @@ function bindGlobalEvents() {
   });
 
   clearEnchantmentsButton.addEventListener("click", clearEnchantments);
-  resetButton.addEventListener("click", resetDefault);
+  resetButton.addEventListener("click", playResetAnimation);
   copyButton.addEventListener("click", copyCommand);
   itemCountInput.addEventListener("input", interactAndUpdate);
+  mobileResultToggle.addEventListener("click", () => {
+    const isOpen = resultColumn.classList.toggle("is-open");
+    mobileResultToggle.setAttribute("aria-expanded", String(isOpen));
+    if (isOpen) {
+      document.getElementById("outputPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
 
   document.addEventListener("click", (event) => {
     document.querySelectorAll(".combobox.is-open").forEach((combobox) => {
@@ -896,10 +1124,27 @@ function bindGlobalEvents() {
         combobox.querySelector(".combobox-input").setAttribute("aria-expanded", "false");
         combobox.querySelector(".combobox-input").value = combobox.dataset.displayValue || "";
         combobox.classList.remove("is-open");
+        combobox.classList.remove("opens-up", "opens-down");
+        combobox.querySelector(".combobox-menu").removeAttribute("style");
         combobox.closest(".enchantment-row")?.classList.remove("combobox-row-open");
       }
     });
+
+    document.querySelectorAll(".panel.has-open-menu").forEach((panel) => {
+      if (!panel.querySelector(".combobox.is-open")) {
+        panel.classList.remove("has-open-menu");
+      }
+    });
   });
+
+  const repositionOpenMenus = () => {
+    document.querySelectorAll(".combobox.is-open").forEach((combobox) => {
+      combobox.positionMenu?.();
+    });
+  };
+
+  window.addEventListener("resize", repositionOpenMenus);
+  window.addEventListener("scroll", repositionOpenMenus, true);
 }
 
 createSearchableCombobox(
@@ -907,7 +1152,7 @@ createSearchableCombobox(
   targetGroups,
   defaultState.target,
   interactWithTargetAndUpdate,
-  "选择目标/输入玩家名称",
+  "可输入自定义名称",
   true
 );
 renderItemOptions(defaultState.item);

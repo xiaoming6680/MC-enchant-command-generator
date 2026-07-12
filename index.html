@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MC附魔指令生成器</title>
+  <meta name="theme-color" content="#100c19">
+  <meta name="description" content="为多个 Minecraft Java 版本生成 /give 附魔物品指令。">
+  <title>MC 附魔指令生成器</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="ambient-particles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <main class="app-shell">
     <header class="app-header">
       <div class="brand-mark" aria-hidden="true">
@@ -17,125 +20,128 @@
       <div class="brand-copy">
         <p class="eyebrow">Minecraft Java Edition</p>
         <h1>附魔指令生成器</h1>
-        <p class="subtitle">为不同 Java 版本生成对应格式的 /give 附魔物品指令</p>
+        <p class="subtitle">选好物品与附魔，立即获得可以粘贴进游戏的 <code>/give</code> 指令。</p>
       </div>
     </header>
 
+    <nav class="journey" aria-label="生成步骤">
+      <span><b>1</b>版本与目标</span><i aria-hidden="true"></i>
+      <span><b>2</b>选择物品</span><i aria-hidden="true"></i>
+      <span><b>3</b>配置附魔</span><i aria-hidden="true"></i>
+      <span><b>4</b>复制指令</span>
+      <button id="resetButton" class="button ghost reset-all-button" type="button">重置全部</button>
+    </nav>
+
     <div class="workspace">
       <div class="editor-column">
-        <section class="panel settings-panel">
+        <div class="left-steps">
+        <section class="panel step-panel settings-panel" aria-labelledby="settingsTitle">
+          <div class="step-number" aria-hidden="true">01</div>
           <div class="panel-header">
             <div>
-              <p class="section-label">设置</p>
-              <h2>指令与目标</h2>
+              <p class="section-label">第一步</p>
+              <h2 id="settingsTitle">版本与目标玩家</h2>
+              <p class="section-description">版本会决定最终指令使用的语法格式。</p>
             </div>
           </div>
-
           <div class="field-grid settings-grid">
             <label class="field">
-              <span>选择 Minecraft Java 版本</span>
+              <span>你的 Minecraft Java 版本</span>
               <select id="versionSelect">
                 <option value="componentShort" selected>Java 1.21.5+</option>
                 <option value="componentLevels">Java 1.20.5 - 1.21.4</option>
                 <option value="nbtString">Java 1.13 - 1.20.4</option>
                 <option value="nbtNumeric">Java 1.8 - 1.12.2</option>
               </select>
+              <small id="versionDescription" class="field-help">新版物品组件简化格式</small>
             </label>
             <label class="field">
-              <span>目标玩家</span>
+              <span>指令给予谁</span>
               <div id="targetCombobox" class="combobox"></div>
+              <small id="targetError" class="field-error" aria-live="polite"></small>
+              <small class="field-help">可选择所有玩家、最近玩家，或直接输入玩家名。</small>
             </label>
-
-            <p id="versionDescription" class="field-help">新版物品组件简化格式</p>
           </div>
         </section>
 
-        <section class="panel item-panel">
+        <section class="panel step-panel item-panel" aria-labelledby="itemTitle">
+          <div class="step-number" aria-hidden="true">02</div>
           <div class="panel-header">
             <div>
-              <p class="section-label">物品</p>
-              <h2>武器或工具</h2>
+              <p class="section-label">第二步</p>
+              <h2 id="itemTitle">选择要给予的物品</h2>
+              <p class="section-description">搜索中文名称或输入 Minecraft 物品 ID。</p>
             </div>
-            <a class="button secondary lookup-button" href="https://mcid.lingningyu.cn/" target="_blank" rel="noopener noreferrer">查询物品 ID</a>
+            <a class="text-link lookup-button" href="https://mcid.lingningyu.cn/" target="_blank" rel="noopener noreferrer">查询物品 ID <span aria-hidden="true">↗</span></a>
           </div>
-
           <div class="field-grid item-fields">
             <label class="field item-id-field">
-              <span>物品 ID</span>
+              <span>物品</span>
               <div id="itemCombobox" class="combobox"></div>
+              <small id="itemError" class="field-error" aria-live="polite"></small>
             </label>
             <label class="field quantity-field">
               <span>数量</span>
-              <input id="itemCountInput" type="text" inputmode="numeric" min="1" value="1" placeholder="1">
+              <input id="itemCountInput" type="text" inputmode="numeric" min="1" value="1" placeholder="1" aria-describedby="quantityError">
+              <small id="quantityError" class="field-error" aria-live="polite"></small>
             </label>
           </div>
         </section>
+        </div>
 
-        <section class="panel enchant-panel">
+        <section class="panel step-panel enchant-panel" aria-labelledby="enchantTitle">
+          <div class="step-number" aria-hidden="true">03</div>
           <div class="panel-header action-header">
             <div>
-              <p class="section-label">附魔</p>
-              <h2>附魔列表</h2>
+              <p class="section-label">第三步 · 可选</p>
+              <h2 id="enchantTitle">配置附魔槽位</h2>
+              <p class="section-description">没有附魔也可以生成普通物品指令。</p>
             </div>
-
-            <div class="button-row">
-              <span id="enchantmentCount" class="count-badge" aria-live="polite">0 条附魔</span>
-              <button id="addEnchantmentButton" class="button primary" type="button">新增附魔</button>
-              <button id="clearEnchantmentsButton" class="button secondary" type="button">清空</button>
-              <button id="resetButton" class="button secondary" type="button">重置</button>
+            <span id="enchantmentCount" class="count-badge" aria-live="polite">0 条附魔</span>
+          </div>
+          <div class="enchant-actions">
+            <button id="addEnchantmentButton" class="button primary" type="button"><span aria-hidden="true">＋</span> 新增附魔</button>
+            <div class="secondary-actions">
+              <button id="clearEnchantmentsButton" class="button ghost" type="button">清空附魔</button>
             </div>
           </div>
-
-          <div class="enchant-table-header" aria-hidden="true">
-            <span>附魔属性</span>
-            <span>等级</span>
-            <span>操作</span>
-          </div>
-
+          <div class="enchant-table-header" aria-hidden="true"><span>附魔属性</span><span>等级</span><span>操作</span></div>
           <div id="enchantmentList" class="enchantment-list"></div>
         </section>
       </div>
 
-      <aside class="result-column">
-        <section class="panel output-panel">
-          <div class="panel-header">
+      <aside id="resultColumn" class="result-column" aria-labelledby="resultTitle">
+        <button id="mobileResultToggle" class="mobile-result-toggle" type="button" aria-expanded="false" aria-controls="outputPanel">
+          <span><small>第四步</small><strong>查看生成的指令</strong></span><i aria-hidden="true"></i>
+        </button>
+        <section id="outputPanel" class="panel output-panel">
+          <div class="output-glow" aria-hidden="true"></div>
+          <div class="panel-header output-header">
             <div>
-              <p class="section-label">结果</p>
-              <h2>指令预览</h2>
+              <p class="section-label">第四步</p>
+              <h2 id="resultTitle">指令预览</h2>
             </div>
           </div>
-
           <div class="command-meta" aria-label="当前指令概要">
-            <div class="meta-pill">
-              <span>版本</span>
-              <strong id="versionMeta">Java 1.21.5+</strong>
-            </div>
-            <div class="meta-pill">
-              <span>目标</span>
-              <strong id="targetMeta">未填写</strong>
-            </div>
-            <div class="meta-pill">
-              <span>物品</span>
-              <strong id="itemMeta">未填写</strong>
-            </div>
-            <div class="meta-pill">
-              <span>附魔</span>
-              <strong id="enchantMeta">0 条</strong>
-            </div>
+            <div class="meta-pill"><span>版本</span><strong id="versionMeta">Java 1.21.5+</strong></div>
+            <div class="meta-pill"><span>目标</span><strong id="targetMeta">未填写</strong></div>
+            <div class="meta-pill"><span>物品</span><strong id="itemMeta">未填写</strong></div>
+            <div class="meta-pill"><span>附魔</span><strong id="enchantMeta">0 条</strong></div>
           </div>
-
-          <pre id="commandPreview" class="command-preview" aria-live="polite"></pre>
+          <div class="command-frame">
+            <div class="command-frame-title"><span>COMMAND</span><i></i><i></i><i></i></div>
+            <pre id="commandPreview" class="command-preview" aria-live="polite"></pre>
+          </div>
           <div id="errorBox" class="error-box" role="alert" aria-live="polite"></div>
-
           <div class="copy-actions">
-            <button id="copyButton" class="button primary copy-button" type="button">复制指令</button>
+            <button id="copyButton" class="button primary copy-button" type="button"><span aria-hidden="true">▣</span> 复制指令</button>
             <span id="copyStatus" class="copy-status" role="status" aria-live="polite"></span>
           </div>
+          <p class="output-tip">复制后，在游戏聊天框或命令方块中粘贴使用。</p>
         </section>
       </aside>
     </div>
   </main>
-
   <script src="script.js" defer></script>
 </body>
 </html>
