@@ -1360,6 +1360,34 @@ select:focus {
 }
 
 @media(max-width:980px) {
+  .app-shell {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .journey {
+    display: grid;
+    grid-template-columns: repeat(4,minmax(0,1fr));
+    gap: 8px;
+    padding: 0 0 4px;
+    overflow: visible;
+  }
+
+  .journey>i {
+    display: none;
+  }
+
+  .journey span {
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .journey .reset-all-button {
+    grid-column: 1/-1;
+    width: 100%;
+    min-height: 44px;
+    margin: 2px 0 0;
+  }
+
   .workspace {
     grid-template-columns: 1fr;
   }
@@ -1377,13 +1405,15 @@ select:focus {
   }
 
   .mobile-result-toggle {
-    position: sticky;
-    bottom: 10px;
+    position: fixed;
+    right: max(11px,env(safe-area-inset-right));
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    left: max(11px,env(safe-area-inset-left));
     z-index: 40;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
+    width: auto;
     min-height: 64px;
     padding: 10px 16px;
     border: 1px solid #77539b;
@@ -1391,6 +1421,10 @@ select:focus {
     background: linear-gradient(135deg,#251731,#11101a);
     box-shadow: 0 8px 26px rgba(0,0,0,.55),inset 0 0 18px rgba(174,114,255,.1);
     cursor: pointer;
+  }
+
+  .mobile-result-toggle.is-returning {
+    animation: mobile-result-return .34s cubic-bezier(.2,.8,.2,1) both;
   }
 
   .mobile-result-toggle span {
@@ -1418,11 +1452,29 @@ select:focus {
 
   .result-column.is-open .mobile-result-toggle {
     position: static;
+    width: 100%;
     margin-bottom: 8px;
   }
 
   .result-column.is-open .mobile-result-toggle i {
     transform: rotate(225deg);
+  }
+
+  @keyframes mobile-result-return {
+    0% {
+      opacity: 0;
+      transform: translateY(calc(100% + 18px)) scale(.98);
+    }
+
+    72% {
+      opacity: 1;
+      transform: translateY(-3px) scale(1);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 }
 
@@ -1443,14 +1495,13 @@ select:focus {
     grid-template: repeat(4,8px)/repeat(4,8px);
   }
 
-  .journey {
-    justify-content: flex-start;
-    padding-bottom: 4px;
-    overflow-x: auto;
+  .editor-column,
+  .left-steps {
+    gap: 14px;
   }
 
-  .journey i {
-    width: 18px;
+  .button {
+    min-height: 46px;
   }
 
   .settings-grid {
@@ -1499,7 +1550,7 @@ select:focus {
 
   .secondary-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .secondary-actions .button {
@@ -1557,6 +1608,15 @@ select:focus {
     padding-right: 15px;
   }
 
+  .panel-header {
+    padding-top: 18px;
+  }
+
+  .field-grid {
+    padding-top: 16px;
+    padding-bottom: 18px;
+  }
+
   .item-fields {
     grid-template-columns: 1fr;
   }
@@ -1567,6 +1627,10 @@ select:focus {
 
   .enchantment-row>div:last-child {
     grid-column: auto;
+  }
+
+  .delete-button {
+    width: 100%;
   }
 
   .command-frame {

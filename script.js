@@ -593,7 +593,7 @@ function createEnchantmentRow(enchantment = defaultState.enchantment, level = de
     enchantmentGroups,
     enchantment,
     interactAndUpdate,
-    "选择附魔/输入自定义附魔",
+    "搜索附魔/输入自定义 ID",
     true,
     true
   );
@@ -725,7 +725,7 @@ function syncAvailabilityForVersion() {
       enchantmentGroups,
       nextValue,
       interactAndUpdate,
-      "选择附魔/输入自定义附魔",
+      "搜索附魔/输入自定义 ID",
       false,
       true
     );
@@ -1095,6 +1095,30 @@ function playResetAnimation() {
 }
 
 function bindGlobalEvents() {
+  const mobileLayout = window.matchMedia("(max-width: 980px)");
+  const outputPanel = document.getElementById("outputPanel");
+  let resultPanelWasVisible = false;
+  let previousScrollY = window.scrollY;
+
+  const showMobileResultReturn = () => {
+    mobileResultToggle.classList.remove("is-returning");
+    void mobileResultToggle.offsetWidth;
+    mobileResultToggle.classList.add("is-returning");
+  };
+
+  const setMobileResultOpen = (isOpen, scrollToResult = false, animateReturn = false) => {
+    resultColumn.classList.toggle("is-open", isOpen);
+    mobileResultToggle.setAttribute("aria-expanded", String(isOpen));
+    resultPanelWasVisible = false;
+    previousScrollY = window.scrollY;
+    if (isOpen && scrollToResult) {
+      outputPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (!isOpen && animateReturn) {
+      showMobileResultReturn();
+    }
+  };
+
   versionSelect.addEventListener("change", () => {
     syncAvailabilityForVersion();
     interactAndUpdate();
@@ -1110,10 +1134,35 @@ function bindGlobalEvents() {
   copyButton.addEventListener("click", copyCommand);
   itemCountInput.addEventListener("input", interactAndUpdate);
   mobileResultToggle.addEventListener("click", () => {
-    const isOpen = resultColumn.classList.toggle("is-open");
-    mobileResultToggle.setAttribute("aria-expanded", String(isOpen));
-    if (isOpen) {
-      document.getElementById("outputPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    const isOpen = !resultColumn.classList.contains("is-open");
+    setMobileResultOpen(isOpen, isOpen, !isOpen);
+  });
+
+  window.addEventListener("scroll", () => {
+    const currentScrollY = window.scrollY;
+    if (!mobileLayout.matches || !resultColumn.classList.contains("is-open")) {
+      previousScrollY = currentScrollY;
+      return;
+    }
+
+    const panelRect = outputPanel.getBoundingClientRect();
+    const isVisible = panelRect.bottom > 0 && panelRect.top < window.innerHeight;
+    if (isVisible) {
+      resultPanelWasVisible = true;
+    }
+
+    const isReturningUp = currentScrollY < previousScrollY - 1;
+    const isFullyBelowViewport = panelRect.top >= window.innerHeight;
+    if (resultPanelWasVisible && isReturningUp && isFullyBelowViewport) {
+      setMobileResultOpen(false, false, true);
+    }
+
+    previousScrollY = currentScrollY;
+  }, { passive: true });
+
+  mobileResultToggle.addEventListener("animationend", (event) => {
+    if (event.animationName === "mobile-result-return") {
+      mobileResultToggle.classList.remove("is-returning");
     }
   });
 
