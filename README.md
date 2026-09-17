@@ -2,7 +2,7 @@
 
 不用手写复杂的 NBT 或物品组件格式，也能快速生成带附魔物品的 `/give` 指令。
 
-**在线使用：[打开附魔指令生成器](https://xiaoming6680.github.io/MC-enchant-command-generator/)**
+**在线使用：[打开附魔指令生成器](https://enchant.xiaoming6680.link/)**
 
 > 本工具适用于 **Minecraft Java Edition**，不支持基岩版（Bedrock Edition）。
 
@@ -107,3 +107,11 @@ Java 1.8–1.12.2：
 - “清空附魔”只会删除附魔槽位；“重置全部”会恢复整个生成器的初始状态。
 - 页面会实时检查输入，但不会判断所有附魔之间是否互斥，也不会限制附魔适用的物品。
 - 在服务器使用前，建议先确认服务器规则允许使用相关指令和超常附魔。
+
+
+## 在线地址与部署
+
+- 在线使用：https://enchant.xiaoming6680.link/
+- 全部工具：https://xiaoming6680.link/tools/
+- GitHub Pages 从 main 分支根目录发布；保留 CNAME 文件以维持自定义域名。
+
